@@ -1,4 +1,5 @@
-pub const ROWS: usize = 512; // 2^9
+pub const BASE: u32 = 9;
+pub const ROWS: usize = 2_usize.pow(BASE); // 2^9
 pub const COLS: usize = ROWS;
 pub const AREA: usize = ROWS * COLS;
 
@@ -39,12 +40,12 @@ impl Grid for FlatVec {
 }
 
 impl Hilbert {
-  // Standard Hilbert (x,y)->d for n×n where n is a power of two (here n=32768).
+  // Standard Hilbert (x,y)->d for n×n where n is a power of two.
   #[inline]
   fn hilbert_xy_to_d(n: usize, mut x: usize, mut y: usize) -> usize {
     let mut d = 0usize;
-    let mut s = n >> 1;
-    while s > 0 {
+    for i in 0..BASE {
+      let s = 1 << i;
       let rx = if (x & s) != 0 { 1usize } else { 0usize };
       let ry = if (y & s) != 0 { 1usize } else { 0usize };
 
@@ -59,7 +60,6 @@ impl Hilbert {
         }
         core::mem::swap(&mut x, &mut y);
       }
-      s >>= 1;
     }
     d
   }
