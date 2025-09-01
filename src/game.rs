@@ -22,9 +22,11 @@ impl Game {
   pub fn increment(&mut self) {
     // Loop over 
     let grid = &mut self.0;
+    let mut deaths: Vec<(usize, usize)> = Vec::default();
+    let mut births: Vec<(usize, usize)> = Vec::default();
     for row in 0..grid::ROWS {
       for col in 0..grid::COLS {
-        let cell: bool = grid.get(row, col);
+        let is_live: bool = grid.get(row, col);
         let col_left = add_with_wraparound(col, -1, grid::COLS);
         let col_right = add_with_wraparound(col, 1, grid::COLS);
         let row_up = add_with_wraparound(row, -1, grid::ROWS);
@@ -38,9 +40,22 @@ impl Game {
           + grid.get(col_left, row_down) as i32
           + grid.get(col, row_down) as i32
           + grid.get(col_right, row_down) as i32;
-        let val = num_neighbors == 3 || (num_neighbors == 2 && cell);
-        grid.set(row, col, val);
+        let dies = is_live && (num_neighbors > 3 || num_neighbors < 2);
+        if dies {
+          deaths.push((row, col));
+          continue;
+        }
+        let reproduces = !is_live && num_neighbors == 3;
+        if reproduces {
+          births.push((row, col));
+        }
       }
+    }
+    for (row, col) in deaths {
+      grid.set(row, col, false);
+    }
+    for (row, col) in births {
+      grid.set(row, col, true);
     }
   }
   
@@ -85,5 +100,67 @@ mod test {
     game.increment();
     let grid = game.inspect_grid();
     assert_eq!(false, grid.get(1, 1), "Cell should have died (underpopulation)");
+  }
+
+  #[test]
+  fn test_dead_with_two_neighbors() {
+    let mut grid = grid::Grid::vec_of_vecs();
+    grid.set(1, 1, true);
+    grid.set(1, 2, true);
+    let mut game = Game::new(grid);
+    game.increment();
+    let grid = game.inspect_grid();
+    assert_eq!(false, grid.get(2, 1), "Cell should have stayed dead");
+  }
+
+  #[test]
+  fn test_live_with_two_neighbors() {
+    let mut grid = grid::Grid::vec_of_vecs();
+    grid.set(1, 1, true);
+    grid.set(1, 2, true);
+    grid.set(1, 3, true);
+    let mut game = Game::new(grid);
+    game.increment();
+    let grid = game.inspect_grid();
+    assert_eq!(true, grid.get(1, 2), "Cell should have stayed live");
+  }
+
+  #[test]
+  fn test_birth() {
+    let mut grid = grid::Grid::vec_of_vecs();
+    grid.set(1, 1, true);
+    grid.set(1, 2, true);
+    grid.set(1, 3, true);
+    let mut game = Game::new(grid);
+    game.increment();
+    let grid = game.inspect_grid();
+    assert_eq!(true, grid.get(2, 2), "Cell should have been born");
+  }
+
+  #[test]
+  fn test_live_with_three_neighbors() {
+    let mut grid = grid::Grid::vec_of_vecs();
+    grid.set(1, 1, true);
+    grid.set(1, 2, true);
+    grid.set(1, 3, true);
+    grid.set(2, 2, true);
+    let mut game = Game::new(grid);
+    game.increment();
+    let grid = game.inspect_grid();
+    assert_eq!(true, grid.get(2, 2), "Cell should have stayed live");
+  }
+
+  #[test]
+  fn test_overpopulation() {
+    let mut grid = grid::Grid::vec_of_vecs();
+    grid.set(1, 1, true);
+    grid.set(1, 2, true);
+    grid.set(1, 3, true);
+    grid.set(2, 1, true);
+    grid.set(2, 2, true);
+    let mut game = Game::new(grid);
+    game.increment();
+    let grid = game.inspect_grid();
+    assert_eq!(false, grid.get(2, 2), "Cell should have died (overpopulation)");
   }
 }
