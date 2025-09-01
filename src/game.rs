@@ -60,13 +60,17 @@ impl Game {
   }
   
   pub fn add_glider(&mut self) {
-    let grid = &mut self.0;
-    // Basic glider
-    grid.set(1, 1, true);
-    grid.set(2, 2, true);
-    grid.set(3, 0, true);
-    grid.set(3, 1, true);
-    grid.set(3, 2, true);
+    let glider = [
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 0],
+      [0, 0, 1, 1, 1, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+    ];
+    let bitmap = glider.each_ref().map(|row| row.as_slice());
+    self.0.load_bitmap(&bitmap);
   }
 
   pub fn bitmap(&self) -> [[u8; grid::COLS]; grid::ROWS] {
@@ -162,15 +166,5 @@ mod test {
     game.increment();
     let grid = game.inspect_grid();
     assert_eq!(false, grid.get(2, 2), "Cell should have died (overpopulation)");
-  }
-
-  #[test]
-  fn set_glider() {
-    let initial = [
-      [0, 1, 0],
-      [0, 0, 1],
-      [1, 1, 1]
-    ];
-
   }
 }
