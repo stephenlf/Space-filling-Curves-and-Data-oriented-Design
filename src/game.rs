@@ -1,29 +1,37 @@
 use crate::grid;
 
-pub struct Game(grid::Grid);
+pub struct Game {
+  grid: grid::Grid,
+  pub generation: u32,
+}
 
 /// Add left and right together, wrapping around range [0..wraparound)
 fn add_with_wraparound(left: usize, right: i32, wraparound: usize) -> usize {
-  ((left as i32 + (wraparound as i32 + right)) % wraparound as i32) as usize
+  let left = left as i32;
+  let wraparound = wraparound as i32;
+  ((left + (wraparound + right)) % wraparound) as usize
 }
 
 impl From<grid::Grid> for Game {
   fn from(value: grid::Grid) -> Self {
-    Self(value)
+    Self {
+      grid: value,
+      generation: 0
+    }
   }
 }
 
 impl Game {
   pub fn new(grid: grid::Grid) -> Self {
-    Self(grid)
+    Self::from(grid)
   }
 
   /// Simulate a single step in the game
   pub fn increment(&mut self) {
-    // Loop over 
-    let grid = &mut self.0;
-    let mut deaths: Vec<(usize, usize)> = Vec::default();
-    let mut births: Vec<(usize, usize)> = Vec::default();
+    self.generation += 1;
+
+    let grid = &mut self.grid;
+    let mut updates: Vec<(usize, usize, bool)> = Vec::default();
     for row in 0..grid::ROWS {
       for col in 0..grid::COLS {
         let is_live: bool = grid.get(row, col);
@@ -32,30 +40,26 @@ impl Game {
         let row_up = add_with_wraparound(row, -1, grid::ROWS);
         let row_down = add_with_wraparound(row, 1, grid::ROWS);
         let num_neighbors: i32 = 
-          grid.get(col_left, row_up) as i32
-          + grid.get(col, row_up) as i32
-          + grid.get(col_right, row_up) as i32
-          + grid.get(col_left, row) as i32
-          + grid.get(col_right, row) as i32
-          + grid.get(col_left, row_down) as i32
-          + grid.get(col, row_down) as i32
-          + grid.get(col_right, row_down) as i32;
-        let dies = is_live && (num_neighbors > 3 || num_neighbors < 2);
-        if dies {
-          deaths.push((row, col));
-          continue;
-        }
-        let reproduces = !is_live && num_neighbors == 3;
-        if reproduces {
-          births.push((row, col));
+          grid.get(row_up, col_left) as i32
+          + grid.get(row_up, col) as i32
+          + grid.get(row_up, col_right) as i32
+          + grid.get(row, col_left) as i32
+          + grid.get(row, col_right) as i32
+          + grid.get(row_down, col_left) as i32
+          + grid.get(row_down, col) as i32
+          + grid.get(row_down, col_right) as i32;
+        let overpopulation = num_neighbors > 3;
+        let underpopulation = num_neighbors < 2;
+        let reproduction = !is_live && num_neighbors == 3;
+        if is_live && (overpopulation || underpopulation) {
+          updates.push((row, col, false));
+        } else if !is_live && reproduction {
+          updates.push((row, col, true));
         }
       }
     }
-    for (row, col) in deaths {
-      grid.set(row, col, false);
-    }
-    for (row, col) in births {
-      grid.set(row, col, true);
+    for (row, col, val) in updates {
+      grid.set(row, col, val);
     }
   }
   
@@ -70,22 +74,22 @@ impl Game {
       [0, 0, 0, 0, 0, 0, 0],
     ];
     let bitmap = glider.each_ref().map(|row| row.as_slice());
-    self.0.load_bitmap(&bitmap);
+    self.grid.load_bitmap(&bitmap);
   }
 
   pub fn bitmap(&self) -> [[u8; grid::COLS]; grid::ROWS] {
-    self.0.bitmap()
+    self.grid.bitmap()
   }
 
   pub fn inspect_grid(&self) -> &grid::Grid {
-    &self.0
+    &self.grid
   }
 }
 
 #[cfg(test)]
 mod test {
   use super::*;
-  use crate::grid;
+  use crate::grid::{self};
   
   #[test]
   fn test_add_with_wraparound() {
@@ -173,13 +177,29 @@ mod test {
       for col in 0..bitmap[row].len() {
         let expect = bitmap[row][col];
         let actual = game.inspect_grid().get(row, col) as u8;
-        assert_eq!(expect, actual, "At ({row}, {col}), expect {expect} but got {actual}");
+        assert_eq!(expect, actual, "At generation {} ({row}, {col}), expect {expect} but got {actual}", game.generation);
       }
     }
   }
 
   #[test]
   fn test_simulation() {
+    let mut grid = grid::Grid::vec_of_vecs();
+    let bitmap = [
+      [0, 1, 0],
+      [0, 0, 1],
+      [0, 1, 0],
+    ];
+    let bitmap = bitmap.each_ref().map(|row| row.as_ref());
+    grid.load_bitmap(&bitmap);
+    let mut game = Game::new(grid);
+    assert_eq!(game.inspect_grid().get(0, 1), true, "Row 0 col 1 set");
+    game.increment();
+    assert_eq!(game.inspect_grid().get(0, 1), false, "Row 0 col 1 died");
+  }
+
+  #[test]
+  fn test_glider() {
     let mut game = Game::new(grid::Grid::vec_of_vecs());
     game.add_glider();
     let glider = [
@@ -193,6 +213,16 @@ mod test {
     ];
     compare_to_bitmap(&game, &glider);
 
-    
+    game.increment();
+    let glider = [
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 1, 0, 1, 0, 0],
+      [0, 0, 0, 1, 1, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+    ];
+    compare_to_bitmap(&game, &glider);
   }
 }
