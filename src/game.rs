@@ -62,6 +62,12 @@ impl Game {
       grid.set(row, col, val);
     }
   }
+
+  pub fn simulate(&mut self, num_generations: u32) {
+    for _ in 0..num_generations {
+      self.increment();
+    }
+  }
   
   pub fn add_glider(&mut self) {
     let glider = [

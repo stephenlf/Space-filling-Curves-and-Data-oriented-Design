@@ -8,3 +8,8 @@ criterion = "0.7.0"
 
 [dependencies]
 gif = "0.13.3"
+
+[[bench]]
+name = "benchmarks"
+harness = false
+
