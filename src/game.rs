@@ -167,4 +167,32 @@ mod test {
     let grid = game.inspect_grid();
     assert_eq!(false, grid.get(2, 2), "Cell should have died (overpopulation)");
   }
+
+  fn compare_to_bitmap<const N: usize>(game: &Game, bitmap: &[[u8; N]]) {
+    for row in 0..bitmap.len() {
+      for col in 0..bitmap[row].len() {
+        let expect = bitmap[row][col];
+        let actual = game.inspect_grid().get(row, col) as u8;
+        assert_eq!(expect, actual, "At ({row}, {col}), expect {expect} but got {actual}");
+      }
+    }
+  }
+
+  #[test]
+  fn test_simulation() {
+    let mut game = Game::new(grid::Grid::vec_of_vecs());
+    game.add_glider();
+    let glider = [
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 1, 0, 0, 0],
+      [0, 0, 0, 0, 1, 0, 0],
+      [0, 0, 1, 1, 1, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+      [0, 0, 0, 0, 0, 0, 0],
+    ];
+    compare_to_bitmap(&game, &glider);
+
+    
+  }
 }
