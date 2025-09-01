@@ -1,3 +1,5 @@
+use std::fmt::Display;
+
 pub const BASE: u32 = 9;
 pub const ROWS: usize = 2_usize.pow(BASE); // 2^9
 pub const COLS: usize = ROWS;
@@ -9,6 +11,9 @@ pub trait Grid {
   fn new() -> Self;
   fn get(&self, row: usize, col: usize) -> Cell;
   fn set(&mut self, row: usize, col: usize, val: Cell);
+  fn to_string(&self) -> String {
+    
+  }
 }
 
 pub struct VecOfVecs([[Cell; COLS]; ROWS]);
