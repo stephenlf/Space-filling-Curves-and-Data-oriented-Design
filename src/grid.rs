@@ -51,6 +51,7 @@ impl Grid {
       }
     }
   }
+  
   pub fn bitmap(&self) -> [[u8; COLS]; ROWS] {
     let mut bitmap = [[0_u8; COLS]; ROWS];
     for row in 0..ROWS {
@@ -61,6 +62,18 @@ impl Grid {
       }
     }
     bitmap
+  }
+
+  pub fn load_bitmap(&mut self, bitmap: &[&[u8]]) {
+    for row in 0..ROWS {
+      for col in 0..COLS {
+        if let Some(cell) = bitmap.get(row).map(|row| row.get(col)).flatten() {
+          self.set(row, col, *cell != 0);
+        } else {
+          self.set(row, col, false);
+        }
+      }
+    }
   }
 }
 
@@ -138,6 +151,21 @@ mod tests {
     }
   }
 
+  fn test_load_bitmap(grid: &mut Grid) {
+    let bitmap = &[
+      [1_u8, 0, 0],
+      [0, 1, 0],
+      [0, 0, 1]
+    ];
+    let to_load = bitmap.each_ref().map(|row| row.as_slice());
+    grid.load_bitmap(&to_load);
+    for row in 0..3 {
+      for col in 0..3 {
+        assert_eq!(bitmap[row][col] != 0, grid.get(row, col));
+      }
+    }
+  }
+
   #[test]
   fn vec_of_vecs_grid() {
     test_get_set(Grid::vec_of_vecs())
@@ -181,5 +209,20 @@ mod tests {
   #[test]
   fn hilbert_bitmap() {
     test_bitmap(&Grid::hilbert());
+  }
+
+  #[test]
+  fn vec_of_vecs_load_bitmap() {
+    test_load_bitmap(&mut Grid::vec_of_vecs());
+  }
+
+  #[test]
+  fn flat_vec_load_bitmap() {
+    test_load_bitmap(&mut Grid::flat_vec());
+  }
+
+  #[test]
+  fn hilbert_load_bitmap() {
+    test_load_bitmap(&mut Grid::hilbert());
   }
 }

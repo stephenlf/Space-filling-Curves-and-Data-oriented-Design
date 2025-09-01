@@ -163,4 +163,14 @@ mod test {
     let grid = game.inspect_grid();
     assert_eq!(false, grid.get(2, 2), "Cell should have died (overpopulation)");
   }
+
+  #[test]
+  fn set_glider() {
+    let initial = [
+      [0, 1, 0],
+      [0, 0, 1],
+      [1, 1, 1]
+    ];
+
+  }
 }
