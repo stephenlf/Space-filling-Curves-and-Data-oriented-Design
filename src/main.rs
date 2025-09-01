@@ -14,7 +14,7 @@ fn main() {
   let mut encoder = build_encoder(&mut image);
   let mut game = Game::new(grid::Grid::vec_of_vecs());
   game.add_glider();
-  for _ in 0..60 {
+  for _ in 0..1 {
     let bitmap = game.bitmap();
     let pixels = bitmap.as_flattened();
     assert_eq!(grid::COLS * grid::ROWS, pixels.len(), "Yo");

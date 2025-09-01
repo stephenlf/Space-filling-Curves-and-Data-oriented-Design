@@ -7,6 +7,12 @@ fn add_with_wraparound(left: usize, right: i32, wraparound: usize) -> usize {
   ((left as i32 + (wraparound as i32 + right)) % wraparound as i32) as usize
 }
 
+impl From<grid::Grid> for Game {
+  fn from(value: grid::Grid) -> Self {
+    Self(value)
+  }
+}
+
 impl Game {
   pub fn new(grid: grid::Grid) -> Self {
     Self(grid)
@@ -41,8 +47,8 @@ impl Game {
   pub fn add_glider(&mut self) {
     let grid = &mut self.0;
     // Basic glider
-    grid.set(1, 0, true);
-    grid.set(2, 1, true);
+    grid.set(1, 1, true);
+    grid.set(2, 2, true);
     grid.set(3, 0, true);
     grid.set(3, 1, true);
     grid.set(3, 2, true);
@@ -51,11 +57,16 @@ impl Game {
   pub fn bitmap(&self) -> [[u8; grid::COLS]; grid::ROWS] {
     self.0.bitmap()
   }
+
+  pub fn inspect_grid(&self) -> &grid::Grid {
+    &self.0
+  }
 }
 
 #[cfg(test)]
 mod test {
   use super::*;
+  use crate::grid;
   
   #[test]
   fn test_add_with_wraparound() {
@@ -64,5 +75,15 @@ mod test {
     assert_eq!(add_with_wraparound(2, 1, 3), 0);
     assert_eq!(add_with_wraparound(10, -1, 11), 9);
     assert_eq!(add_with_wraparound(0, -1, 10), 9);
+  }
+
+  #[test]
+  fn test_underpopulation() {
+    let mut grid = grid::Grid::vec_of_vecs();
+    grid.set(1, 1, true);
+    let mut game = Game::new(grid);
+    game.increment();
+    let grid = game.inspect_grid();
+    assert_eq!(false, grid.get(1, 1), "Cell should have died (underpopulation)");
   }
 }
