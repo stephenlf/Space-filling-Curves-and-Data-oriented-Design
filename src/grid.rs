@@ -11,14 +11,45 @@ pub trait Grid {
   fn new() -> Self;
   fn get(&self, row: usize, col: usize) -> Cell;
   fn set(&mut self, row: usize, col: usize, val: Cell);
-  fn to_string(&self) -> String {
-    
-  }
 }
 
+#[derive(Debug)]
 pub struct VecOfVecs([[Cell; COLS]; ROWS]);
+#[derive(Debug)]
 pub struct FlatVec([Cell; AREA]);
+#[derive(Debug)]
 pub struct Hilbert([Cell; AREA]);
+
+fn to_string(grid: &impl Grid) -> String {
+  let mut strs: Vec<String> = Vec::with_capacity(ROWS);
+  for row in 0..ROWS {
+    let mut buf: Vec<char> = vec![' '; COLS * 2];
+    for col in 0..COLS {
+      if grid.get(row, col) {
+        buf[col*2] = '█';
+        buf[col*2 + 1] = '█';
+      }
+    }
+    strs.push(buf.into_iter().collect());
+  }
+  strs.join("\n")
+}
+
+impl Display for VecOfVecs {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str(&to_string(self))
+  }
+}
+impl Display for FlatVec {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str(&to_string(self))
+  }
+}
+impl Display for Hilbert {
+  fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+    f.write_str(&to_string(self))
+  }
+}
 
 impl Grid for VecOfVecs {
   fn new() -> Self {
@@ -117,5 +148,14 @@ mod tests {
   #[test]
   fn hilbert_grid() {
     test_all_methods(Hilbert::new())
+  }
+
+  #[test]
+  fn test_display() {
+    let hilbert = Hilbert::new();
+    let str = hilbert.to_string();
+    let cell_chars = ROWS * COLS * 2;
+    let newlines = ROWS - 1;
+    assert_eq!(str.len(), cell_chars + newlines, "Two chars per cell, plus newline between each row");
   }
 }
