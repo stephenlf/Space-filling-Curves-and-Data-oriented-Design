@@ -25,3 +25,12 @@ I simulate Conway's Game of Life on a large, two-dimensional ($n × m$) grid. Ea
 
 I seed each Game of Life board with a preset initial condition. I measure the performance of each memory layout by testing _how long it takes to simulate 1 million iterations of Conway's Game of Life._
 
+I ran benchmarks on EC2:
+- **Image:** Ubuntu (ubuntu/images/hvm-ssd-gp3/ubuntu-noble-24.04-amd64-server-20250821)
+- **Instance Type:** t2.large
+- **Memory:** 8Gb
+- **vCPUs:** 2
+
+## Results
+
+See docs/ directory for criterion report.
